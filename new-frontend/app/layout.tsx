@@ -7,9 +7,9 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'TravelHub - Search, Plan & Book Your Perfect Trip',
+  title: 'Roameo - Search, Plan & Book Your Perfect Trip',
   description: 'Discover and book your next adventure with AI-powered itinerary planning, smart hotel recommendations, and collaborative trip planning.',
-  generator: 'v0.app',
+  
   icons: {
     icon: [
       {

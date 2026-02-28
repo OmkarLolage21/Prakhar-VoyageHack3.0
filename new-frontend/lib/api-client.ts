@@ -882,7 +882,7 @@ export async function deleteTrip(tripId: string) {
 }
 
 export async function searchHotels(payload: {
-  trip_id: string;
+  trip_id?: string;
   location: string;
   budget: number;
   check_in?: string;
@@ -890,8 +890,19 @@ export async function searchHotels(payload: {
   adults?: number;
   children?: number;
 }) {
-  const trip = getTripInternal(payload.trip_id);
-  if (!trip) throw new Error('Trip not found');
+  const trip = payload.trip_id ? getTripInternal(payload.trip_id) : null;
+  if (payload.trip_id && !trip) throw new Error('Trip not found');
+  const tripContext = trip
+    ? buildTripDefaults(trip)
+    : buildTripDefaults({
+        name: 'Adhoc Hotel Search',
+        origin: '',
+        destination: payload.location || '',
+        budget: Number(payload.budget || 30000),
+        start_date: payload.check_in,
+        end_date: payload.check_out,
+        itinerary: [],
+      });
   let hotels: any[] = [];
   let source: 'ai' | 'ai_fallback' | 'tbo' = useTboApi ? 'tbo' : 'ai';
   try {
@@ -900,8 +911,8 @@ export async function searchHotels(payload: {
         method: 'POST',
         body: JSON.stringify({
           location: payload.location,
-          check_in: payload.check_in || trip.start_date,
-          check_out: payload.check_out || trip.end_date,
+          check_in: payload.check_in || tripContext.start_date,
+          check_out: payload.check_out || tripContext.end_date,
           adults: Math.max(1, Number(payload.adults || 1)),
           children: Math.max(0, Number(payload.children || 0)),
           max_budget_inr: Number(payload.budget || 0),
@@ -913,7 +924,7 @@ export async function searchHotels(payload: {
       );
       source = 'tbo';
     } else {
-      const itineraryTextBase = (trip.itinerary || [])
+      const itineraryTextBase = (tripContext.itinerary || [])
         .map((day: any, idx: number) => {
           const lines = [`Day ${idx + 1} (${day.date || ''})`];
           (day.activities || []).forEach((activity: any) => {
@@ -926,13 +937,13 @@ export async function searchHotels(payload: {
 
 Focused stay request:
 - Location: ${payload.location}
-- Check-in: ${payload.check_in || trip.start_date}
-- Check-out: ${payload.check_out || trip.end_date}
+- Check-in: ${payload.check_in || tripContext.start_date}
+- Check-out: ${payload.check_out || tripContext.end_date}
 - Adults: ${Math.max(1, Number(payload.adults || 1))}
 - Max budget: INR ${payload.budget}`;
       const backend = await postToSession<{ accommodation_options?: string }>('find-accommodation-options', {
         itinerary: itineraryText,
-        origin: trip.origin,
+        origin: tripContext.origin || payload.location,
         max_budget_inr: payload.budget,
       });
       const rawHotels = String(backend.accommodation_options || '').trim();
@@ -947,19 +958,21 @@ Focused stay request:
   if (!hotels.length) {
     throw new Error('No hotels could be parsed from AI response for this day.');
   }
-  trip._hotel_cache = trip._hotel_cache || {};
-  hotels.forEach((hotel) => {
-    trip._hotel_cache![hotel.id] = hotel;
-  });
-  trip.updated_at = nowIso();
-  upsertTrip(trip);
-  return { trip_id: payload.trip_id, hotels, source };
+  if (trip) {
+    trip._hotel_cache = trip._hotel_cache || {};
+    hotels.forEach((hotel) => {
+      trip._hotel_cache![hotel.id] = hotel;
+    });
+    trip.updated_at = nowIso();
+    upsertTrip(trip);
+  }
+  return { trip_id: payload.trip_id || '', hotels, source };
 }
 
-export async function getHotelDetails(hotelId: string, payload: { trip_id: string; location?: string; hotel_name?: string }) {
-  const trip = getTripInternal(payload.trip_id);
-  if (!trip) throw new Error('Trip not found');
-  const cached = trip._hotel_cache?.[hotelId];
+export async function getHotelDetails(hotelId: string, payload: { trip_id?: string; location?: string; hotel_name?: string }) {
+  const trip = payload.trip_id ? getTripInternal(payload.trip_id) : null;
+  if (payload.trip_id && !trip) throw new Error('Trip not found');
+  const cached = trip?._hotel_cache?.[hotelId];
   if (useTboApi) {
     const response = await rawFetch<{ hotel?: any }>('/tbo/hotels/details', {
       method: 'POST',
@@ -968,11 +981,11 @@ export async function getHotelDetails(hotelId: string, payload: { trip_id: strin
     const fromTbo = response.hotel || {};
     const images = Array.isArray(fromTbo.images) ? fromTbo.images.map((item: any) => String(item)).filter(Boolean) : [];
     const primaryPrice = coerceNumber(cached?.price ?? fromTbo.price, 0);
-    const effectivePrice = primaryPrice > 0 ? primaryPrice : Math.max(1400, Math.round(trip.budget / 6));
+    const effectivePrice = primaryPrice > 0 ? primaryPrice : Math.max(1400, Math.round(Number(trip?.budget || 24000) / 6));
     return {
       id: String(fromTbo.id || hotelId),
       name: String(fromTbo.name || payload.hotel_name || cached?.name || 'Selected Hotel'),
-      location: String(fromTbo.location || payload.location || cached?.location || trip.destination),
+      location: String(fromTbo.location || payload.location || cached?.location || trip?.destination || ''),
       rating: coerceNumber(fromTbo.rating, coerceNumber(cached?.rating, 4)),
       reviews: Math.max(0, Math.round(coerceNumber(fromTbo.reviews, coerceNumber(cached?.reviews, 0)))),
       price: effectivePrice,
@@ -1003,15 +1016,15 @@ export async function getHotelDetails(hotelId: string, payload: { trip_id: strin
   const base = cached || {
     id: hotelId,
     name: payload.hotel_name || 'Selected Hotel',
-    location: payload.location || trip.destination,
+    location: payload.location || trip?.destination || '',
     rating: 4.1,
     reviews: 160,
-    price: Math.max(1400, Math.round(trip.budget / 6)),
+    price: Math.max(1400, Math.round(Number(trip?.budget || 24000) / 6)),
     amenities: ['WiFi', 'Breakfast', 'AC'],
   };
   return {
     ...base,
-    description: `${base.name} is suitable for your ${trip.destination} itinerary.`,
+    description: `${base.name} is suitable for your ${trip?.destination || payload.location || 'planned stay'} itinerary.`,
     images: [
       `https://picsum.photos/seed/${encodeURIComponent(base.id)}-1/1200/800`,
       `https://picsum.photos/seed/${encodeURIComponent(base.id)}-2/1200/800`,

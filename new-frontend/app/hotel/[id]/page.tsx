@@ -53,14 +53,14 @@ function HotelDetailPageContent() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!hotelId || !tripId) {
-        setError('Missing trip/hotel context.');
+      if (!hotelId) {
+        setError('Missing hotel id.');
         setLoading(false);
         return;
       }
       try {
         const data = await getHotelDetails(hotelId, {
-          trip_id: tripId,
+          trip_id: tripId || undefined,
           location: location || undefined,
           hotel_name: hotelName || undefined,
         });
@@ -93,7 +93,7 @@ function HotelDetailPageContent() {
   const handleBook = () => {
     if (!detail) return;
     const payload = {
-      trip_id: tripId,
+      trip_id: tripId || undefined,
       selections: [
         {
           category: 'hotel' as const,
@@ -114,7 +114,7 @@ function HotelDetailPageContent() {
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem('voyage_checkout_payload', JSON.stringify(payload));
     }
-    router.push(`/payment?trip=${encodeURIComponent(tripId)}`);
+    router.push(tripId ? `/payment?trip=${encodeURIComponent(tripId)}` : '/payment');
   };
 
   return (
@@ -129,7 +129,7 @@ function HotelDetailPageContent() {
         ) : error || !detail ? (
           <div className="max-w-6xl mx-auto p-8 text-center">
             <p className="text-sm text-red-600 mb-4">{error || 'Hotel not found.'}</p>
-            <Link href={`/hotels?trip=${encodeURIComponent(tripId)}${location ? `&destination=${encodeURIComponent(location)}` : ''}`}>
+            <Link href={`/hotels${location ? `?destination=${encodeURIComponent(location)}` : ''}`}>
               <Button>Back to Hotels</Button>
             </Link>
           </div>
@@ -227,7 +227,7 @@ function HotelDetailPageContent() {
 
                 <Button onClick={handleBook} className="w-full mb-2">Book & Pay</Button>
                 <Link
-                  href={`/hotels?trip=${encodeURIComponent(tripId)}${location ? `&destination=${encodeURIComponent(location)}` : ''}`}
+                  href={`/hotels${location ? `?destination=${encodeURIComponent(location)}` : ''}`}
                   className="block"
                 >
                   <Button variant="outline" className="w-full">Back to Hotels</Button>
