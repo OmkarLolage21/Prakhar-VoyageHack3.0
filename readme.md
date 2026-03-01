@@ -22,7 +22,7 @@ Prakhar-VoyageHack3.0/
 |---|---|
 | Frontend | Next.js 16.1, React 19, TypeScript 5.7, Tailwind CSS v4 |
 | UI Components | Radix UI (shadcn/ui), Lucide React, Recharts, Embla Carousel |
-| Maps | Mapbox GL JS v3, @mapbox/mapbox-gl-draw |
+| Maps | Mapbox GL JS v3|
 | AI Backend | Python 3, Flask 2.3, phidata 2.7, Groq LLM |
 | TBO Backend | Python 3, Flask 2.3, TBO Hotel & Air APIs |
 | Voice Backend | Python 3, FastAPI, Sarvam AI (speech-to-text + translation) |
