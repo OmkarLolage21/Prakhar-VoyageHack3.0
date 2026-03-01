@@ -10,7 +10,7 @@ export function Footer() {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2 font-bold text-lg">
               <MapPin className="w-5 h-5" />
-              <span>TravelHub</span>
+              <span>Roameo</span>
             </div>
             <p className="text-sm opacity-80">
               Your ultimate travel companion for discovering, planning, and booking unforgettable journeys.
@@ -66,7 +66,7 @@ export function Footer() {
             <h3 className="font-semibold">Support</h3>
             <ul className="space-y-2 text-sm opacity-80">
               <li>
-                <a href="mailto:support@travelhub.com" className="hover:opacity-100 transition">
+                <a href="mailto:support@Roameo.com" className="hover:opacity-100 transition">
                   Contact Us
                 </a>
               </li>
@@ -85,7 +85,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-border/20 pt-8 text-center text-sm opacity-60">
-          <p>&copy; 2026 TravelHub. All rights reserved. Built for the TBO Hackathon.</p>
+          <p>&copy; 2026 Roameo. All rights reserved. Built for the TBO Hackathon.</p>
         </div>
       </div>
     </footer>

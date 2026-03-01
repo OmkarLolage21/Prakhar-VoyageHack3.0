@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { MapPin, Compass, Luggage, User, Menu, Plane, Zap } from 'lucide-react';
+import { MapPin, Compass, Luggage, User, Menu, Plane, Zap, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -21,7 +21,7 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 font-bold text-xl text-primary">
             <MapPin className="w-6 h-6" />
-            <span className="hidden sm:inline">TravelHub</span>
+            <span className="hidden sm:inline">Roameo</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -36,6 +36,12 @@ export function Navbar() {
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4" />
                 AI Planner
+              </div>
+            </Link>
+            <Link href="/voice-planner" className="text-sm font-medium text-foreground/80 hover:text-primary transition">
+              <div className="flex items-center gap-2">
+                <Mic className="w-4 h-4" />
+                Voice Planner
               </div>
             </Link>
             <Link href="/transport" className="text-sm font-medium text-foreground/80 hover:text-primary transition">
@@ -87,6 +93,9 @@ export function Navbar() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
                     <Link href="/hotels">Hotels</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/voice-planner">Voice Planner</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/trips">My Trips</Link>
